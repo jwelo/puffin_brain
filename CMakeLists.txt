@@ -114,6 +114,7 @@ catkin_install_python(
 	scripts/subscriber_node.py
 	scripts/service_server_node.py
 	scripts/service_client_node.py
+  scripts/whisper_listener_node.py
 	DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
