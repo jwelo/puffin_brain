@@ -5,6 +5,7 @@ import pyaudio
 import numpy as np
 import whisper
 from std_msgs.msg import String
+import threading
 
 class WhisperListener:
     def __init__(self):
@@ -36,7 +37,7 @@ class WhisperListener:
 
     def _open_audio_stream(self):
         """Opens the PyAudio input stream."""
-        if self.stream: # Close existing stream if any
+        if self.stream and self.stream.is_active(): # Close existing stream if any
             self._close_audio_stream()
 
         try:
@@ -44,7 +45,9 @@ class WhisperListener:
                                       channels=self.CHANNELS,
                                       rate=self.SAMPLE_RATE,
                                       input=True,
-                                      frames_per_buffer=self.CHUNK_SIZE)
+                                      frames_per_buffer=self.CHUNK_SIZE,
+                                      stream_callback=None # No callback, we read manually
+                                      )
             rospy.loginfo("Audio stream opened successfully.")
             return True
         except Exception as e:
@@ -56,7 +59,8 @@ class WhisperListener:
         """Closes the PyAudio input stream."""
         if self.stream:
             try:
-                self.stream.stop_stream()
+                if self.stream.is_active(): # Check if active before stopping
+                    self.stream.stop_stream()
                 self.stream.close()
                 rospy.loginfo("Audio stream stopped and closed.")
             except Exception as e:
@@ -64,21 +68,22 @@ class WhisperListener:
             finally:
                 self.stream = None # Ensure stream is set to None after closing
 
-    def _terminate_pyaudio(self):
-        """Terminates the PyAudio instance."""
+    def _on_shutdown(self):
+        """Callback executed when the ROS node is shutting down."""
+        rospy.loginfo("Shutting down WhisperListener node...")
+        if self.command_timer:
+            self.command_timer.shutdown() # Stop any active timers
+        self._close_audio_stream() # Close the audio stream
         if self.p:
             try:
                 self.p.terminate()
                 rospy.loginfo("PyAudio terminated.")
             except Exception as e:
-                rospy.logwarn(f"Error terminating PyAudio: {e}")
-            finally:
-                self.p = None # Ensure PyAudio object is set to None
+                rospy.logwarn(f"Error terminating PyAudio during shutdown: {e}")
 
     def _process_audio_chunk(self):
         """Reads audio data and converts it for Whisper."""
         if not self.stream:
-            rospy.logerr("Audio stream is not open. Cannot process audio.")
             return None
 
         try:
@@ -108,18 +113,25 @@ class WhisperListener:
         if self.command_count >= 5:
             rospy.loginfo("Stopping command transcription after 5 seconds of inactivity.")
             self.command_timer.shutdown()
+            self.command_timer= None
             self.is_transcribing_commands = False
-            self.wait_for_hello_loop() # Go back to waiting for "hello turtle"
 
     def start_command_transcription(self):
         """Starts the command transcription mode."""
+        rospy.loginfo("Entering command transcription mode. Say a command!")
         self.is_transcribing_commands = True
         self.command_count = 0
+
+        if not self._open_audio_stream():
+            rospy.logerr("Failed to open audio stream for command mode. Cannot proceed.")
+            self.is_transcribing_commands = False # Ensure loop doesn't start
+            self.wait_for_hello_loop() # Immediately go back to waiting for wake word if this fails
+            return
+
         if self.command_timer: # Ensure no old timer is running
             self.command_timer.shutdown()
         self.command_timer = rospy.Timer(rospy.Duration(1), self._handle_command_timer)
 
-        rospy.loginfo("Entering command transcription mode. Say a command!")
         self._open_audio_stream() # Ensure stream is open
 
         rate = rospy.Rate(1) # 1 Hz
@@ -150,39 +162,47 @@ class WhisperListener:
                     self.command_count = 0 # Reset timer on valid command
                 else:
                     rospy.loginfo(f"No recognized command in: '{command}'")
-
+            else:
+                rospy.loginfo("No audio data processed or transcription failed.")
             rate.sleep()
 
         # If loop exits (either shutdown or is_transcribing_commands becomes False)
         self._close_audio_stream()
-        self._terminate_pyaudio()
+        self.wait_for_hello_loop() 
         rospy.loginfo("Exited command transcription mode.")
 
 
     def wait_for_hello_loop(self):
         """Main loop to listen for 'hello turtle'."""
-        self.is_transcribing_commands = False
-        self._open_audio_stream() # Ensure stream is open for this mode
-
         rospy.loginfo("Listening for 'hello turtle'...")
-        rate = rospy.Rate(1) # 1 Hz
+        self.is_transcribing_commands = False # Ensure this is false
+
+        # Ensure the stream is opened correctly *before* starting the main loop
+        if not self._open_audio_stream():
+            rospy.logerr("Failed to open audio stream for wake word. Node may not function.")
+            # If we can't open stream, we can't listen. Keep trying or let node crash.
+            # For now, let's keep trying in the loop, but it will error on process_audio_chunk.
+            # A better solution here might be to spin ROS or wait, then retry.
+            pass # Continue to the loop, where _process_audio_chunk will log errors
+
+        rate = rospy.Rate(1) # Process chunks at 1 Hz
 
         while not rospy.is_shutdown() and not self.is_transcribing_commands:
-            rospy.loginfo("Waiting for 'hello turtle'...")
+            rospy.loginfo("Waiting for 'hello'...")
             audio_np = self._process_audio_chunk()
             transcription = self._transcribe_audio(audio_np)
 
             rospy.loginfo(f"Heard: '{transcription}'")
 
-            if "hello turtle" in transcription.lower(): # Using .lower() for robustness
+            if "hello" in transcription.lower(): # Using .lower() for robustness
                 rospy.loginfo("Received 'hello turtle'!")
                 self.start_command_transcription()
                 break # Exit this loop to start command transcription
             rate.sleep()
 
-        if rospy.is_shutdown():
-            self._close_audio_stream()
-            self._terminate_pyaudio()
+        rospy.loginfo("Exited wake word listening loop.")
+        self._close_audio_stream() # Ensure stream is closed upon loop exit
+
 
     def run(self):
         """Main entry point to start the node's operation."""
@@ -196,7 +216,3 @@ if __name__ == '__main__':
         listener.run()
     except rospy.ROSInterruptException:
         rospy.loginfo("Whisper listener node interrupted.")
-    finally:
-        # Ensure PyAudio is terminated even if an error occurs
-        if 'listener' in locals() and listener.p:
-            listener._terminate_pyaudio()

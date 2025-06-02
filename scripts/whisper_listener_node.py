@@ -14,11 +14,11 @@ CHANNELS = 1
 global count
 global p
 global stream
-rospy.init_node("whisper_listener", anonymous=True)
 # Whisper Model
 model = whisper.load_model("tiny")
 
 def timer_increment(event):
+    global count
     count += 1
     rospy.loginfo(f"Timer incremented: {count}")
     if count >= 5:
@@ -31,6 +31,7 @@ def timer_increment(event):
 
 def transcribe():
     pub = rospy.Publisher('transcription_topic', String, queue_size=10)
+    global count
     count = 0
     rospy.Timer(rospy.Duration(1), timer_increment)
     p = pyaudio.PyAudio()
@@ -58,23 +59,23 @@ def transcribe():
 
         msg = String()
         if "left" in command:
-            msg = "left"
+            msg.data = "left"
             rospy.loginfo("received left command")
             count = 0
         elif "right" in command:
-            msg = "right"
+            msg.data = "right"
             rospy.loginfo("received right command")
             count = 0
         elif "forward" in command:
-            msg = "forward"
+            msg.data = "forward"
             rospy.loginfo("received forward command")
             count = 0
         elif "backward" in command:
-            msg = "backward"
+            msg.data = "backward"
             rospy.loginfo("received backward command")
             count = 0
         elif "stop" in command:
-            msg = "stop"
+            msg.data = "stop"
             rospy.loginfo("received stop command")
             count = 0
         rospy.loginfo("Recevied command: %s", msg)
@@ -125,4 +126,5 @@ def wait_for_hello():
                 
 
 if __name__ == '__main__':
+    rospy.init_node("whisper_listener", anonymous=True)
     wait_for_hello()    
