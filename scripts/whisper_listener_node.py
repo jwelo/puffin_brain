@@ -21,8 +21,8 @@ def timer_increment(event):
     global count
     count += 1
     rospy.loginfo(f"Timer incremented: {count}")
-    if count >= 5:
-        rospy.loginfo("Stopping transcription after 5 seconds")
+    if count >= 30:
+        rospy.loginfo("Stopping transcription after 30 seconds")
         # stop recording and close the stream
         stream.stop_stream()
         stream.close()
