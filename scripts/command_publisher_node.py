@@ -1,10 +1,10 @@
-#! /usr/env/bin python
+#! /usr/bin/env python
 
 # will receive magnitude of linear x and angular z, and duration of each 
 
 import rospy
 from std_msgs.msg import String
-from agentturtle.msg import tuttwist
+from agentturtle.msg import tutwist
 from geometry_msgs.msg import Twist
 
 class CommandPublisher:
@@ -12,7 +12,7 @@ class CommandPublisher:
         # Initialize the ROS node
         rospy.init_node('command_publisher', anonymous=True)
 
-        self.sub = rospy.Subscriber('/cmd_ollama', tuttwist, self.callback)
+        self.sub = rospy.Subscriber('/cmd_ollama', tutwist, self.callback)
 
         # Create a publisher for the '/cmd_vel' topic
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
@@ -30,8 +30,8 @@ class CommandPublisher:
     def callback(self, message):
 
         # Log the received message
-        rospy.loginfo(f"Ollama Command Received: Linear Velocity of {message.linear_x:.2f} for {message.linear_x_duration:.2f} seconds,
-        Angular Velocity of {message.angular_z:.2f} for {message.angular_z_duration:.2f} seconds")
+        rospy.loginfo(f"Ollama Command Received: Linear Velocity of {message.linear_x:.2f} for {message.linear_x_duration:.2f} seconds,"
+                      f"Angular Velocity of {message.angular_z:.2f} for {message.angular_z_duration:.2f} seconds")
 
         if message.linear_x_duration > 0:
             self.end_time_linear_x = rospy.get_time() + message.linear_x_duration
