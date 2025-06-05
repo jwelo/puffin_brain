@@ -1,0 +1,4 @@
+float64 linear_x
+float64 linear_x_duration
+float64 angular_z
+float64 angular_z_duration
