@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+# bruh need to chnage my output 
 import rospy
 import pyaudio
 import numpy as np
