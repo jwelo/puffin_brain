@@ -119,6 +119,7 @@ catkin_install_python(
   scripts/whisper_listener_class_node.py
   scripts/command_publisher_node.py
   scripts/mock_ollama_publisher.py
+  scripts/ollama_publisher_node.py
 	DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
