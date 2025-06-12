@@ -14,7 +14,7 @@ class WhisperListener:
         rospy.init_node("whisper_listener", anonymous=True)
 
         # ROS Publisher
-        self.transcription_pub = rospy.Publisher('transcription_topic', String, queue_size=10)
+        self.transcription_pub = rospy.Publisher('/whisper_transcription', String, queue_size=10)
 
         # Whisper Model - Load once at initialization
         rospy.loginfo("Loading Whisper model (tiny)...")
