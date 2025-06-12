@@ -179,7 +179,7 @@ class WhisperListener:
         """Starts the command transcription mode."""
         rospy.loginfo("Entering command transcription mode. Say a command!")
         self.is_transcribing_commands = True
-        self.command_count = 0
+        # self.command_count = 0
 
         if not self.stream:
             rospy.logerr("Failed to open audio stream for command mode. Cannot proceed.")
@@ -188,15 +188,22 @@ class WhisperListener:
 
         if self.command_timer: # Ensure no old timer is running
             self.command_timer.shutdown()
-        self.command_timer = rospy.Timer(rospy.Duration(1), self._handle_command_timer)
+        # self.command_timer = rospy.Timer(rospy.Duration(1), self._handle_command_timer)
 
-        rate = rospy.Rate(1)
-
+        # rate = rospy.Rate(0.1)
+        rospy.loginfo("Listening for command...")
+        rospy.sleep(8) # Give some time before starting to listen
+        audio_np = self._get_audio_for_transcription((self.CHUNK_DURATION)*10)
+        command = self._transcribe_audio(audio_np)
+        self.transcription_pub.publish(command) # Publish the raw transcription
+        self.is_transcribing_commands = False
+        rospy.sleep(20)
+        """
         while not rospy.is_shutdown() and self.is_transcribing_commands:
             rospy.loginfo("Waiting for command...")
-            audio_np = self._get_audio_for_transcription(self.CHUNK_DURATION)
+            audio_np = self._get_audio_for_transcription((self.CHUNK_DURATION))
             command = self._transcribe_audio(audio_np)
-
+            
             if command: # Only process if something was transcribed
                 rospy.loginfo(f"Transcribed command: '{command}'")
                 processed_command = ""
@@ -220,7 +227,9 @@ class WhisperListener:
                     rospy.loginfo(f"No recognized command in: '{command}'")
             else:
                 rospy.loginfo("No audio data processed or transcription failed.")
-            rate.sleep()
+            """
+            
+            #rate.sleep()
 
         # If loop exits (either shutdown or is_transcribing_commands becomes False)
         rospy.loginfo("Exited command transcription mode.")
@@ -250,7 +259,7 @@ class WhisperListener:
             rospy.loginfo(f"Heard: '{transcription}'")
 
             if "hello" in transcription.lower(): # Using .lower() for robustness
-                rospy.loginfo("Received 'hello turtle'!")
+                rospy.loginfo("Received hello!")
                 self.start_command_transcription()
             rate.sleep()
 

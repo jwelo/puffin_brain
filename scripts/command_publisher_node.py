@@ -6,6 +6,7 @@ import rospy
 from std_msgs.msg import String
 from agentturtle.msg import tutwist
 from geometry_msgs.msg import Twist
+import queue
 
 class CommandPublisher:
     def __init__(self):
@@ -26,26 +27,33 @@ class CommandPublisher:
         self.end_time_angular_z = 0.0
         self.publishing_rate = 10  # 10 Hz
         self.timer = rospy.Timer(rospy.Duration(1.0 / self.publishing_rate), self.publish_command)
+        self.command_queue = queue.Queue()
+        self.executing = False
 
     def callback(self, message):
-
-        # Log the received message
         rospy.loginfo(f"Ollama Command Received: Linear Velocity of {message.linear_x:.2f} for {message.linear_x_duration:.2f} seconds,"
                       f"Angular Velocity of {message.angular_z:.2f} for {message.angular_z_duration:.2f} seconds")
+        self.command_queue.put(message)
+        self.try_execute_next_command()
 
-        if message.linear_x_duration > 0:
-            self.end_time_linear_x = rospy.get_time() + message.linear_x_duration
-            self.current_linear_x = message.linear_x
-        else:
-            self.end_time_linear_x = 0.0
-            self.current_linear_x = 0.0
+    def try_execute_next_command(self):
+        if not self.executing and not self.command_queue.empty():
+            msg = self.command_queue.get()
+            self.executing = True   
+            
+            if message.linear_x_duration > 0:
+                self.end_time_linear_x = rospy.get_time() + message.linear_x_duration
+                self.current_linear_x = message.linear_x
+            else:
+                self.end_time_linear_x = 0.0
+                self.current_linear_x = 0.0
 
-        if message.angular_z_duration > 0:
-            self.end_time_angular_z = rospy.get_time() + message.angular_z_duration
-            self.current_angular_z = message.angular_z
-        else:
-            self.end_time_angular_z = 0.0
-            self.current_angular_z = 0.0
+            if message.angular_z_duration > 0:
+                self.end_time_angular_z = rospy.get_time() + message.angular_z_duration
+                self.current_angular_z = message.angular_z
+            else:
+                self.end_time_angular_z = 0.0
+                self.current_angular_z = 0.0
 
 
     def publish_command(self, event):
@@ -55,6 +63,9 @@ class CommandPublisher:
         if rospy.get_time() >= self.end_time_angular_z:
             self.current_angular_z = 0.0
             self.end_time_angular_z = 0.0
+        if self.current_linear_x == 0.0 and self.current_angular_z == 0.0 and self.executing:
+            self.executing = False
+            self.try_execute_next_command()
 
         # Create a Twist message
         twist_msg = Twist()
@@ -67,7 +78,9 @@ class CommandPublisher:
         self.pub.publish(twist_msg)
 
         # Log the published command
-        rospy.loginfo(f"Published Command: Linear Velocity {self.current_linear_x:.2f}, Angular Velocity {self.current_angular_z:.2f}")
+        if (self.current_linear_x != 0.0 or self.current_angular_z != 0.0):
+            rospy.loginfo(f"Command Publisher : Linear Velocity {self.current_linear_x:.2f}, Angular Velocity {self.current_angular_z:.2f}")
+
 
 
 if __name__ == '__main__':
