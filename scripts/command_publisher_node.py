@@ -31,8 +31,8 @@ class CommandPublisher:
         self.executing = False
 
     def callback(self, message):
-        rospy.loginfo(f"Ollama Command Received: Linear Velocity of {message.linear_x:.2f} for {message.linear_x_duration:.2f} seconds,"
-                      f"Angular Velocity of {message.angular_z:.2f} for {message.angular_z_duration:.2f} seconds")
+        rospy.loginfo(f"Ollama Command Received: Linear Velocity of {message.linear_x} for {message.linear_x_duration:.2f} seconds,"
+                      f"Angular Velocity of {message.angular_z} for {message.angular_z_duration:.2f} seconds")
         self.command_queue.put(message)
         self.try_execute_next_command()
 
@@ -43,14 +43,14 @@ class CommandPublisher:
 
             if message.linear_x_duration > 0:
                 self.end_time_linear_x = rospy.get_time() + message.linear_x_duration
-                self.current_linear_x = message.linear_x
+                self.current_linear_x = (message.linear_x)/2
             else:
                 self.end_time_linear_x = 0.0
                 self.current_linear_x = 0.0
 
             if message.angular_z_duration > 0:
                 self.end_time_angular_z = rospy.get_time() + message.angular_z_duration
-                self.current_angular_z = message.angular_z
+                self.current_angular_z = (message.angular_z)/2
             else:
                 self.end_time_angular_z = 0.0
                 self.current_angular_z = 0.0
@@ -79,7 +79,7 @@ class CommandPublisher:
 
         # Log the published command
         if (self.current_linear_x != 0.0 or self.current_angular_z != 0.0):
-            rospy.loginfo(f"Command Publisher : Linear Velocity {self.current_linear_x:.2f}, Angular Velocity {self.current_angular_z:.2f}")
+            rospy.loginfo(f"Command Publisher : Linear Velocity {self.current_linear_x:.2f} m/s, Angular Velocity {self.current_angular_z:.2f} rad/s")
 
 
 

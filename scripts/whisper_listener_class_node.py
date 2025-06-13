@@ -191,7 +191,7 @@ class WhisperListener:
         # self.command_timer = rospy.Timer(rospy.Duration(1), self._handle_command_timer)
 
         # rate = rospy.Rate(0.1)
-        rospy.loginfo("Listening for command...")
+        rospy.loginfo("Listening for command...\n Include direction, speed (1-5) and duration (in seconds)")
         rospy.sleep(8) # Give some time before starting to listen
         audio_np = self._get_audio_for_transcription((self.CHUNK_DURATION)*10)
         command = self._transcribe_audio(audio_np)

@@ -1,4 +1,4 @@
-float64 linear_x
+int linear_x
 float64 linear_x_duration
-float64 angular_z
+int angular_z
 float64 angular_z_duration

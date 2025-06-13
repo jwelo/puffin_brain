@@ -13,7 +13,7 @@ import warnings # Add this to suppress the Pydantic warning
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 @tool
-def robot_linear_movement(speed: float, duration: float) -> str:
+def robot_linear_movement(speed: int, duration: float) -> str:
     """
     This tool is used to control the robot's linear movement. Linear movement refers to moving the robot forwards or backwards.
     Publishes a tutwist message to /cmd_ollama that moves the robot forward or backward at a specified speed for a specified duration. Requires the speed and duration parameters to be provided.
@@ -31,7 +31,7 @@ def robot_linear_movement(speed: float, duration: float) -> str:
     return f"ROSA: Attempting to MOVE robot with linear speed of {speed} for {duration} seconds."
 
 @tool
-def robot_turning_movement(speed: float, duration: float) -> str:
+def robot_turning_movement(speed: int, duration: float) -> str:
     """
     This tool is used to control the robot's turning movement.
     Publishes a tutwist message to /cmd_ollama that turns the robot left or right at a specified angular speed for a specified duration. Requires the angular speed and duration parameters to be provided.
@@ -51,7 +51,7 @@ print("Registered tools:", [t.name for t in [robot_linear_movement, robot_turnin
 
 ollama_llm = ChatOllama(
     model="llama3.2",
-    temperature=1,
+    temperature=0,
     num_ctx=8192,
     verbose=True,
 )
@@ -65,8 +65,10 @@ prompts = RobotSystemPrompts(
         "If duration is not specified, use a default of 2 seconds. "
         "If speed is not specified, use 1 for linear and 1 for angular movement. "
         #"Call each function only ONCE per user request. "
-        "Never repeat, correct, or reflect on your actions unless the user asks."
+        "Never repeat, correct, or reflect on, summarize, or undo your actions unless the user asks."
+        "Do not perform any actions except those directly requested by the user. "
         "Turning left uses a positive angular speed, turning right uses a negative angular speed."
+        "If turning is provided in angles, every 90 degrees is equivalent to speed 2 for two seconds."
         "Moving forward uses a positive linear speed, moving backward uses a negative linear speed. "
         #"You have two Python functions to control your movement: `robot_linear_movement` for moving forward/backward, "
         #"and `robot_turning_movement` for turning. "
