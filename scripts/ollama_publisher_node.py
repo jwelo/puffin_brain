@@ -57,23 +57,40 @@ ollama_llm = ChatOllama(
 )
 
 prompts = RobotSystemPrompts(
-    embodiment_and_persona="You are a cool, three-wheeled robot that moves around.",
+    embodiment_and_persona="You are a three-wheeled robot that moves around.",
     # critical_instructions="You must confirm all actions with the operator before proceeding. Failure to do so might result in damage to the robot or its environment.",
     about_your_capabilities=(
-        "You have two Python functions to control your movement: `robot_linear_movement` for moving forward/backward, "
-        "and `robot_turning_movement` for turning. "
-        "You do not need to access the nodes and topics in the ROS environment, as these functions handle the underlying ROS communication for you. "
-        "If the user does not specify a duration, always use a default duration of 2 seconds. If the duration argument is missing, insert the default value into the tool before executing it, so that you only use each tool once per user request. "
-        "You must only call each function ONCE per user request, even if you need to assume a default value."
-        "Never repeat or correct your actions unless the user explicitly asks for a correction or repeat. "
-        "Do not reflect on or review your actions after executing them."
+        "You control movement using two Python functions: `robot_linear_movement` (forwards/backwards) and `robot_turning_movement` (turning). "
+        "These functions handle all ROS communication. There is no need to access ROS nodes or topics directly. "
+        "If duration is not specified, use a default of 2 seconds. "
+        "If speed is not specified, use 1 for linear and 1 for angular movement. "
+        #"Call each function only ONCE per user request. "
+        "Never repeat, correct, or reflect on your actions unless the user asks."
+        "Turning left uses a positive angular speed, turning right uses a negative angular speed."
+        "Moving forward uses a positive linear speed, moving backward uses a negative linear speed. "
+        #"You have two Python functions to control your movement: `robot_linear_movement` for moving forward/backward, "
+        #"and `robot_turning_movement` for turning. "
+        #"You do not need to access the nodes and topics in the ROS environment, as these functions handle the underlying ROS communication for you. "
+        #"If the user does not specify a duration, always use a default duration of 2 seconds. If the duration argument is missing, insert the default value into the tool before executing it, so that you only use each tool once per user request. "
+        #"You must only call each function ONCE per user request, even if you need to assume a default value."
+        #"Never repeat or correct your actions unless the user explicitly asks for a correction or repeat. "
+        #"Do not reflect on or review your actions after executing them."
     ),
-    about_your_environment="You are in a ROS environment, but for movement, you must rely exclusively on the provided Python functions (`robot_linear_movement`, `robot_turning_movement`). These functions handle the underlying ROS communication for you. There is no need to find the available topics or nodes. You must only execute each function ONCE per user request, even if you have to assume a default value. ",
+    about_your_environment=(
+        "You are in a ROS environment. Only use the provided movement functions; do not access ROS nodes or topics directly. "
+        "Execute each function only once per user request, even if you assume default values."
+        #"You are in a ROS environment, but for movement, you must rely exclusively on the provided Python functions (`robot_linear_movement`, `robot_turning_movement`). These functions handle the underlying ROS communication for you. There is no need to find the available topics or nodes. You must only execute each function ONCE per user request, even if you have to assume a default value. "
+    ),
     about_your_operators=(
-        "Your operator is a human who will provide you with instructions on how to move. "
-        "The instructions should include a movement magnitude and duration. "
-        "If duration is not specified, assume a default duration of 2 seconds. "
-        "Do not repeat or correct your actions unless the user asks."
+        "Your operator gives movement instructions. "
+        #"If duration is missing, use 2 seconds. If speed is missing or zero, use 1. "
+        #"Turning left uses a positive angular speed, turning right uses a negative angular speed."
+
+        #"Your operator is a human who will provide you with instructions on how to move. "
+        #"The instructions should include a movement magnitude and duration."
+        #"If duration is not specified, assume a default duration of 2 seconds. "
+        #"If speed is zero OR not specified, assume a default speed of 1 for linear movement and 1 speed for angular movement. "
+        #"Do not repeat or correct your actions unless the user asks."
     ),
 )
 agent = None  # Initialize the agent variable globally

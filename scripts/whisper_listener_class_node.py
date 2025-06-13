@@ -197,7 +197,7 @@ class WhisperListener:
         command = self._transcribe_audio(audio_np)
         self.transcription_pub.publish(command) # Publish the raw transcription
         self.is_transcribing_commands = False
-        rospy.sleep(20)
+        rospy.sleep(30)
         """
         while not rospy.is_shutdown() and self.is_transcribing_commands:
             rospy.loginfo("Waiting for command...")

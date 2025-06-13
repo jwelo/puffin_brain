@@ -38,9 +38,9 @@ class CommandPublisher:
 
     def try_execute_next_command(self):
         if not self.executing and not self.command_queue.empty():
-            msg = self.command_queue.get()
+            message = self.command_queue.get()
             self.executing = True   
-            
+
             if message.linear_x_duration > 0:
                 self.end_time_linear_x = rospy.get_time() + message.linear_x_duration
                 self.current_linear_x = message.linear_x
