@@ -4,7 +4,7 @@
 
 import rclpy
 from std_msgs.msg import String
-from agentturtle.msg import tutwist
+from puffin_msgs_interface.msg import tutwist
 from geometry_msgs.msg import Twist
 import queue
 
