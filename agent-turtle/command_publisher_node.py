@@ -2,7 +2,7 @@
 
 # will receive magnitude of linear x and angular z, and duration of each 
 
-import rospy
+import rclpy
 from std_msgs.msg import String
 from agentturtle.msg import tutwist
 from geometry_msgs.msg import Twist

@@ -15,3 +15,6 @@ __pycache__/
 *.swp
 *.swo
 .DS_Store
+
+# ROS 1 stuff
+scripts/
