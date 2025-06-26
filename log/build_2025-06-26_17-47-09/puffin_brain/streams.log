@@ -1,0 +1,37 @@
+[1.185s] Invoking command in '/home/jetson/puffin_ws/src/puffin_brain': PYTHONPATH=/home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/puffin_brain build --build-base /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build install --record /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/install.log --single-version-externally-managed install_data
+[1.630s] running egg_info
+[1.631s] creating build/puffin_brain/puffin_brain.egg-info
+[1.632s] writing build/puffin_brain/puffin_brain.egg-info/PKG-INFO
+[1.633s] writing dependency_links to build/puffin_brain/puffin_brain.egg-info/dependency_links.txt
+[1.633s] writing entry points to build/puffin_brain/puffin_brain.egg-info/entry_points.txt
+[1.633s] writing requirements to build/puffin_brain/puffin_brain.egg-info/requires.txt
+[1.634s] writing top-level names to build/puffin_brain/puffin_brain.egg-info/top_level.txt
+[1.634s] writing manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+[1.636s] reading manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+[1.637s] writing manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+[1.638s] running build
+[1.638s] running build_py
+[1.639s] creating /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build
+[1.639s] creating /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib
+[1.639s] creating /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+[1.639s] copying puffin_brain/ollama_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+[1.640s] copying puffin_brain/whisper_listener_node.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+[1.640s] copying puffin_brain/__init__.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+[1.640s] copying puffin_brain/command_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+[1.640s] running install
+[1.641s] running install_lib
+[1.641s] creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+[1.641s] copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/ollama_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+[1.642s] copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/whisper_listener_node.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+[1.642s] copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/__init__.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+[1.642s] copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/command_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+[1.642s] byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/ollama_publisher_node.py to ollama_publisher_node.cpython-310.pyc
+[1.644s] byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/whisper_listener_node.py to whisper_listener_node.cpython-310.pyc
+[1.646s] byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/__init__.py to __init__.cpython-310.pyc
+[1.646s] byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/command_publisher_node.py to command_publisher_node.cpython-310.pyc
+[1.647s] running install_data
+[1.648s] creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/ament_index
+[1.648s] creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/ament_index/resource_index
+[1.648s] creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/ament_index/resource_index/packages
+[1.648s] error: can't copy 'resource/puffin_brain': doesn't exist or not a regular file
+[1.697s] Invoked command in '/home/jetson/puffin_ws/src/puffin_brain' returned '1': PYTHONPATH=/home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/puffin_brain build --build-base /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build install --record /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/install.log --single-version-externally-managed install_data

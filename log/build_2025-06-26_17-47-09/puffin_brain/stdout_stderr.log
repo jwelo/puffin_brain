@@ -1,0 +1,35 @@
+running egg_info
+creating build/puffin_brain/puffin_brain.egg-info
+writing build/puffin_brain/puffin_brain.egg-info/PKG-INFO
+writing dependency_links to build/puffin_brain/puffin_brain.egg-info/dependency_links.txt
+writing entry points to build/puffin_brain/puffin_brain.egg-info/entry_points.txt
+writing requirements to build/puffin_brain/puffin_brain.egg-info/requires.txt
+writing top-level names to build/puffin_brain/puffin_brain.egg-info/top_level.txt
+writing manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+reading manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+writing manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build
+creating /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib
+creating /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+copying puffin_brain/ollama_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+copying puffin_brain/whisper_listener_node.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+copying puffin_brain/__init__.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+copying puffin_brain/command_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain
+running install
+running install_lib
+creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/ollama_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/whisper_listener_node.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/__init__.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+copying /home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/build/lib/puffin_brain/command_publisher_node.py -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain
+byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/ollama_publisher_node.py to ollama_publisher_node.cpython-310.pyc
+byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/whisper_listener_node.py to whisper_listener_node.cpython-310.pyc
+byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain/command_publisher_node.py to command_publisher_node.cpython-310.pyc
+running install_data
+creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/ament_index
+creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/ament_index/resource_index
+creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/ament_index/resource_index/packages
+error: can't copy 'resource/puffin_brain': doesn't exist or not a regular file

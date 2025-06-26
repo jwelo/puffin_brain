@@ -1,0 +1,23 @@
+running egg_info
+writing build/puffin_brain/puffin_brain.egg-info/PKG-INFO
+writing dependency_links to build/puffin_brain/puffin_brain.egg-info/dependency_links.txt
+writing entry points to build/puffin_brain/puffin_brain.egg-info/entry_points.txt
+writing requirements to build/puffin_brain/puffin_brain.egg-info/requires.txt
+writing top-level names to build/puffin_brain/puffin_brain.egg-info/top_level.txt
+reading manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+writing manifest file 'build/puffin_brain/puffin_brain.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+copying resource/puffin_brain -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/ament_index/resource_index/packages
+copying package.xml -> /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/puffin_brain
+creating /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/share/puffin_brain/launch
+running install_egg_info
+Copying build/puffin_brain/puffin_brain.egg-info to /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/python3.10/site-packages/puffin_brain-0.0.0-py3.10.egg-info
+running install_scripts
+Installing command_publisher_node script to /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/puffin_brain
+Installing ollama_publisher_node script to /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/puffin_brain
+Installing whisper_listener_node script to /home/jetson/puffin_ws/src/puffin_brain/install/puffin_brain/lib/puffin_brain
+writing list of installed files to '/home/jetson/puffin_ws/src/puffin_brain/build/puffin_brain/install.log'
