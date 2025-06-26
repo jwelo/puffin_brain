@@ -1,0 +1,17 @@
+# ROS
+build/
+devel/
+install/
+logs/
+# Python
+__pycache__/
+*.pyc
+# C++
+*.o
+*.d
+*~
+# Common editor/system files
+.#*
+*.swp
+*.swo
+.DS_Store

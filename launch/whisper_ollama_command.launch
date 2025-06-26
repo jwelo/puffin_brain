@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="agentturtle" type="whisper_listener_class_node.py" name="whisper_listener" output="screen"></node>
+  <node pkg="agentturtle" type="ollama_publisher_node.py" name="ollama_publisher_node" output="screen"></node>
+  <node pkg="agentturtle" type="command_publisher_node.py" name="command_publisher" output="screen"></node>
+</launch>
