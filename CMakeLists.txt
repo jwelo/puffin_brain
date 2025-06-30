@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(agentturtle)
+project(puffin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -51,7 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
   add_message_files(
 	  FILES
 	  position.msg
-    tutwist.msg
+    Tutwist.msg
 )
 
 ## Generate services in the 'srv' folder

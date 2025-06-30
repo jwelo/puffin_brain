@@ -6,7 +6,7 @@ from rosa import ROSA, RobotSystemPrompts
 from langchain_ollama import ChatOllama
 from langchain.agents import tool
 #from langchain_core.tools import tool
-from puffin_msgs_interface.msg import tutwist
+from puffin_msgs_interfaces.msg import Tutwist
 from std_msgs.msg import String
 import warnings # Add this to suppress the Pydantic warning
 
@@ -17,35 +17,35 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 def robot_linear_movement(speed: int, duration: float) -> str:
     """
     This tool is used to control the robot's linear movement. Linear movement refers to moving the robot forwards or backwards.
-    Publishes a tutwist message to /cmd_ollama that moves the robot forward or backward at a specified speed for a specified duration. Requires the speed and duration parameters to be provided.
+    Publishes a Tutwist message to /cmd_ollama that moves the robot forward or backward at a specified speed for a specified duration. Requires the speed and duration parameters to be provided.
     Args:
         speed: The speed that the robot is travelling forwards or backwards.
         duration: The duration that the robot travels forwards or backwards at the specified speed.
     """
 
     # Your code here ...
-    tutwist_msg = tutwist()
-    tutwist_msg.linear_x = speed
-    tutwist_msg.linear_x_duration = duration
-    ollama_node.ollama_publisher.publish(tutwist_msg)
-    ollama_node.get_logger().info(f"Published command: Linear Velocity {tutwist_msg.linear_x}, Duration {tutwist_msg.linear_x_duration}")
+    Tutwist_msg = Tutwist()
+    Tutwist_msg.linear_x = speed
+    Tutwist_msg.linear_x_duration = duration
+    ollama_node.ollama_publisher.publish(Tutwist_msg)
+    ollama_node.get_logger().info(f"Published command: Linear Velocity {Tutwist_msg.linear_x}, Duration {Tutwist_msg.linear_x_duration}")
     return f"ROSA: Attempting to MOVE robot with linear speed of {speed} for {duration} seconds."
 
 @tool
 def robot_turning_movement(speed: int, duration: float) -> str:
     """
     This tool is used to control the robot's turning movement.
-    Publishes a tutwist message to /cmd_ollama that turns the robot left or right at a specified angular speed for a specified duration. Requires the angular speed and duration parameters to be provided.
+    Publishes a Tutwist message to /cmd_ollama that turns the robot left or right at a specified angular speed for a specified duration. Requires the angular speed and duration parameters to be provided.
     Args:
         speed: The speed that the robot is turning left or right.
         duration: The duration that the robot turns left or right at the specified angular speed.
     """
     # Your code here ...
-    tutwist_msg = tutwist()
-    tutwist_msg.angular_z = speed
-    tutwist_msg.angular_z_duration = duration
-    ollama_node.ollama_publisher.publish(tutwist_msg)
-    ollama_node.get_logger().info(f"Published command: Angular Velocity {tutwist_msg.angular_z}, Duration {tutwist_msg.angular_z_duration}")
+    Tutwist_msg = Tutwist()
+    Tutwist_msg.angular_z = speed
+    Tutwist_msg.angular_z_duration = duration
+    ollama_node.ollama_publisher.publish(Tutwist_msg)
+    ollama_node.get_logger().info(f"Published command: Angular Velocity {Tutwist_msg.angular_z}, Duration {Tutwist_msg.angular_z_duration}")
     return f"ROSA: Attempting to TURN robot with angular speed of {speed} for {duration} seconds."
 
 print("Registered tools:", [t.name for t in [robot_linear_movement, robot_turning_movement]])
@@ -54,7 +54,7 @@ class OllamaPublisherNode(Node):
     def __init__(self):
         super().__init__('ollama_publisher_node')
         
-        self.ollama_publisher = self.create_publisher(tutwist, '/cmd_ollama', 10)
+        self.ollama_publisher = self.create_publisher(Tutwist, '/cmd_ollama', 10)
         self.ollama_subscriber = self.create_subscription(String, '/whisper_transcription', self.callback, 10)
         
         self.get_logger().info("Ollama Publisher Node Initialized")

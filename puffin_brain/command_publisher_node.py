@@ -5,7 +5,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from puffin_msgs_interface.msg import tutwist
+from puffin_msgs_interfaces.msg import Tutwist
 from geometry_msgs.msg import Twist
 import queue
 import time
@@ -15,7 +15,7 @@ class CommandPublisher(Node):
         # Initialize the ROS node
         super().__init__('command_publisher')
 
-        self.sub = self.create_subscription(tutwist, '/cmd_ollama', self.callback, 10)
+        self.sub = self.create_subscription(Tutwist, '/cmd_ollama', self.callback, 10)
 
         # Create a publisher for the '/cmd_vel' topic
         self.pub = self.create_publisher(Twist, '/cmd_vel', 10)
