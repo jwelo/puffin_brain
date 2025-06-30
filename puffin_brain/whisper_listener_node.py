@@ -206,7 +206,7 @@ class WhisperListener(Node):
         msg.data = command
         self.transcription_pub.publish(msg) # Publish the raw transcription
         self.is_transcribing_commands = False
-        time.sleep(30) # delay to allow ollama to transcribe the command before receiving new commands on whisper
+        time.sleep(10) # delay to allow ollama to transcribe the command before receiving new commands on whisper
         """
         while not rospy.is_shutdown() and self.is_transcribing_commands:
             rospy.loginfo("Waiting for command...")

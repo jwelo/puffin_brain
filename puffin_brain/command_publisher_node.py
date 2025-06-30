@@ -34,7 +34,6 @@ class CommandPublisher(Node):
         self.get_logger().info(f"Ollama Command Received: Linear Velocity of {message.linear_x} for {message.linear_x_duration:.2f} seconds,"
                       f"Angular Velocity of {message.angular_z} for {message.angular_z_duration:.2f} seconds")
         self.command_queue.put(message)
-        self.try_execute_next_command()
 
     def try_execute_next_command(self):
         if not self.executing and not self.command_queue.empty():
@@ -43,30 +42,36 @@ class CommandPublisher(Node):
 
             if message.linear_x_duration > 0:
                 self.end_time_linear_x = time.time() + message.linear_x_duration
-                self.current_linear_x = (message.linear_x)/2
+                self.current_linear_x = message.linear_x
             else:
                 self.end_time_linear_x = 0.0
                 self.current_linear_x = 0.0
 
             if message.angular_z_duration > 0:
                 self.end_time_angular_z = time.time() + message.angular_z_duration
-                self.current_angular_z = (message.angular_z)/2
+                self.current_angular_z = message.angular_z
             else:
                 self.end_time_angular_z = 0.0
                 self.current_angular_z = 0.0
 
     def publish_command(self):
         current_time = time.time()
-        
-        if current_time >= self.end_time_linear_x:
-            self.current_linear_x = 0.0
-            self.end_time_linear_x = 0.0  # Reset end time to avoid repeated zero velocity
-        if current_time >= self.end_time_angular_z:
-            self.current_angular_z = 0.0
-            self.end_time_angular_z = 0.0
-        if self.current_linear_x == 0.0 and self.current_angular_z == 0.0 and self.executing:
-            self.executing = False
+        if not self.executing:
             self.try_execute_next_command()
+        else:
+            # Check if linear movement time has expired
+            if self.end_time_linear_x > 0.0 and current_time >= self.end_time_linear_x:
+                self.current_linear_x = 0.0
+                self.end_time_linear_x = 0.0
+            
+            # Check if angular movement time has expired
+            if self.end_time_angular_z > 0.0 and current_time >= self.end_time_angular_z:
+                self.current_angular_z = 0.0
+                self.end_time_angular_z = 0.0
+                
+            # Check if we're done executing the current command
+            if self.current_linear_x == 0.0 and self.current_angular_z == 0.0:
+                self.executing = False
 
         # Create a Twist message
         twist_msg = Twist()
