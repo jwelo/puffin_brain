@@ -170,7 +170,7 @@ class WhisperListener(Node):
             return ""
 
     def _handle_command_timer(self):
-        """Callback for the command mode timer."""
+        # Callback for the command mode timer.
         self.command_count += 1
         self.get_logger().info(f"Command timer incremented: {self.command_count}")
         if self.command_count >= 15:
@@ -206,7 +206,7 @@ class WhisperListener(Node):
         msg.data = command
         self.transcription_pub.publish(msg) # Publish the raw transcription
         self.is_transcribing_commands = False
-        time.sleep(10) # delay to allow ollama to transcribe the command before receiving new commands on whisper
+        time.sleep(20) # delay to allow ollama to transcribe the command before receiving new commands on whisper
         """
         while not rospy.is_shutdown() and self.is_transcribing_commands:
             rospy.loginfo("Waiting for command...")

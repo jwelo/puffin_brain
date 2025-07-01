@@ -61,9 +61,9 @@ class OllamaPublisherNode(Node):
         
         # Initialize LLM and prompts
         self.ollama_llm = ChatOllama(
-            model="llama3.2",
+            model="llama3.2:1b",
             temperature=0,
-            num_ctx=8192,
+            num_ctx=8192,  # Reduced from 8192
             verbose=True,
         )
 
@@ -75,35 +75,20 @@ class OllamaPublisherNode(Node):
                 "These functions handle all ROS communication. There is no need to access ROS nodes or topics directly. "
                 "If duration is not specified, use a default of 2 seconds. "
                 "If speed is not specified, use 1 for linear and 1 for angular movement. "
-                #"Call each function only ONCE per user request. "
                 "Never repeat, correct, or reflect on, summarize, or undo your actions unless the user asks."
                 "Do not perform any actions except those directly requested by the user. "
                 "Turning left uses a positive angular speed, turning right uses a negative angular speed."
                 "If turning is provided in angles, every 90 degrees is equivalent to speed 2 for two seconds."
                 "Moving forward uses a positive linear speed, moving backward uses a negative linear speed. "
-                #"You have two Python functions to control your movement: `robot_linear_movement` for moving forward/backward, "
-                #"and `robot_turning_movement` for turning. "
-                #"You do not need to access the nodes and topics in the ROS environment, as these functions handle the underlying ROS communication for you. "
-                #"If the user does not specify a duration, always use a default duration of 2 seconds. If the duration argument is missing, insert the default value into the tool before executing it, so that you only use each tool once per user request. "
-                #"You must only call each function ONCE per user request, even if you need to assume a default value."
                 #"Never repeat or correct your actions unless the user explicitly asks for a correction or repeat. "
                 #"Do not reflect on or review your actions after executing them."
             ),
             about_your_environment=(
                 "You are in a ROS environment. Only use the provided movement functions; do not access ROS nodes or topics directly. "
                 "Execute each function only once per user request, even if you assume default values."
-                #"You are in a ROS environment, but for movement, you must rely exclusively on the provided Python functions (`robot_linear_movement`, `robot_turning_movement`). These functions handle the underlying ROS communication for you. There is no need to find the available topics or nodes. You must only execute each function ONCE per user request, even if you have to assume a default value. "
             ),
             about_your_operators=(
-                "Your operator gives movement instructions. "
-                #"If duration is missing, use 2 seconds. If speed is missing or zero, use 1. "
-                #"Turning left uses a positive angular speed, turning right uses a negative angular speed."
-
-                #"Your operator is a human who will provide you with instructions on how to move. "
-                #"The instructions should include a movement magnitude and duration."
-                #"If duration is not specified, assume a default duration of 2 seconds. "
-                #"If speed is zero OR not specified, assume a default speed of 1 for linear movement and 1 speed for angular movement. "
-                #"Do not repeat or correct your actions unless the user asks."
+                "Your operator gives movement instructions, which should include a magnitude and duration. "
             ),
         )
         
@@ -126,11 +111,11 @@ def main(args=None):
     
     try:
         ollama_node = OllamaPublisherNode()
+    
         
-        """
-        debugging example commands:
+        #debugging example commands:
         try:
-            #agent_response = ollama_node.agent.invoke("Please move the robot forward at speed 1.0 for 2.0 seconds using the provided movement tools.")
+            agent_response = ollama_node.agent.invoke("Please move the robot forward at speed 1.0 for 2.0 seconds using the provided movement tools.")
             # agent_response = ollama_node.agent.invoke("Please move the robot forward at speed 5, then turn the robot left at speed 1.0 for 5.0 seconds using the provided movement tools.")
             #agent_response = ollama_node.agent.invoke("Give me a list of nodes.")
             #agent_response = ollama_node.agent.invoke("robot_linear_movement(speed=1.0, duration=2.0)")
@@ -138,7 +123,7 @@ def main(args=None):
             # print("DEBUG: Agent chat history:", ollama_node.agent.chat_history)
         except Exception as e:
             ollama_node.get_logger().error(f"An error occurred during agent invocation: {e}")
-        """
+        
         
         rclpy.spin(ollama_node)
     except KeyboardInterrupt:
