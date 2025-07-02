@@ -42,14 +42,14 @@ class CommandPublisher(Node):
 
             if message.linear_x_duration > 0:
                 self.end_time_linear_x = time.time() + message.linear_x_duration
-                self.current_linear_x = message.linear_x
+                self.current_linear_x = message.linear_x/23
             else:
                 self.end_time_linear_x = 0.0
                 self.current_linear_x = 0.0
 
             if message.angular_z_duration > 0:
                 self.end_time_angular_z = time.time() + message.angular_z_duration
-                self.current_angular_z = message.angular_z
+                self.current_angular_z = message.angular_z/2
             else:
                 self.end_time_angular_z = 0.0
                 self.current_angular_z = 0.0

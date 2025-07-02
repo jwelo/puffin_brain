@@ -4,6 +4,7 @@ import rclpy
 from rclpy.node import Node
 import pyaudio
 import numpy as np
+#from faster_whisper import WhisperModel
 import whisper
 from std_msgs.msg import String
 import threading
@@ -18,8 +19,12 @@ class WhisperListener(Node):
         # ROS Publisher
         self.transcription_pub = self.create_publisher(String, '/whisper_transcription', 10)
 
-        # Whisper Model - Load once at initialization
+        """
+        # Faster Whisper
         self.get_logger().info("Loading Whisper model (tiny)...")
+        model = WhisperModel("tiny", device="cuda", compute_type="float16")
+        """
+        # Whisper 
         self.model = whisper.load_model("tiny")
         self.get_logger().info("Whisper model loaded.")
 
