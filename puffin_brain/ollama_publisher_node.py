@@ -61,8 +61,8 @@ class OllamaPublisherNode(Node):
         
         # Initialize LLM and prompts
         self.ollama_llm = ChatOllama(
-            model="llama3.2",
-            temperature=0,
+            model="llama3.2", #from llama3.2
+            temperature=0, # from 0
             num_ctx=8192,  # Reduced from 8192
             verbose=True,
         )
@@ -77,12 +77,11 @@ class OllamaPublisherNode(Node):
             about_your_capabilities=(
                 "You control movement using two Python functions: `robot_linear_movement` (forwards/backwards) and `robot_turning_movement` (turning). "
                 "These functions handle all ROS communication. There is no need to access ROS nodes or topics directly. "
-                "EXECUTE EACH FUNCTION ONLY ONCE PER USER COMMAND. "
                 "If duration is not specified, use a default of 2 seconds. "
                 "If speed is not specified, use 2 for linear and 2 for angular movement."
-                "Turning left uses a POSITIVE angular speed."
-                "Turning right uses a NEGATIVE angular speed."
-                "For turning, turning 90 degrees is at speed 2 for 2 seconds."
+                "For turning right, use a NEGATIVE angular speed."
+                "For turning left, use a POSITIVE angular speed."
+                "For turning, every 90 degrees is 2 seconds at speed 2. Do math to calculate the respective duration for other angles. For example, 180 degrees is 4 seconds at speed 2. "
                 "Moving forward uses a positive linear speed, moving backward uses a negative linear speed. "
                 "DO NOT repeat, undo, or correct your actions automatically."
             ),
@@ -112,10 +111,10 @@ def main(args=None):
     global ollama_node
     
     rclpy.init(args=args)
+    ollama_node = None
     
     try:
         ollama_node = OllamaPublisherNode()
-    
         
         #debugging example commands:
         
@@ -128,12 +127,27 @@ def main(args=None):
         #print("DEBUG: Agent chat history:", ollama_node.agent.chat_history)
         
         rclpy.spin(ollama_node)
+        
     except KeyboardInterrupt:
-        pass
-    finally:
         if ollama_node:
-            ollama_node.destroy_node()
-        rclpy.shutdown()
+            ollama_node.get_logger().info("Shutting down OllamaPublisherNode...")
+    except Exception as e:
+        if ollama_node:
+            ollama_node.get_logger().error(f"Error in OllamaPublisherNode: {e}")
+    finally:
+        # Ensure proper cleanup sequence
+        if ollama_node:
+            try:
+                ollama_node.destroy_node()
+            except Exception as e:
+                print(f"Error destroying node: {e}")
+        
+        # Only shutdown if we initialized
+        try:
+            if rclpy.ok():
+                rclpy.shutdown()
+        except Exception as e:
+            print(f"Error during ROS shutdown: {e}")
 
 if __name__ == "__main__":
     main()

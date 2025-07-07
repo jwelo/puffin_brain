@@ -5,6 +5,7 @@ from rclpy.node import Node
 import pyaudio
 import numpy as np
 from faster_whisper import WhisperModel
+import scipy.signal
 #import whisper
 from std_msgs.msg import String
 import threading
@@ -31,7 +32,7 @@ class WhisperListener(Node):
         """
         # Audio Parameters
         self.CHUNK_DURATION = 1
-        self.SAMPLE_RATE = 16000
+        self.SAMPLE_RATE = 44100  # Changed to match USB device's native rate
         # self.CHUNK_SIZE = int(self.SAMPLE_RATE * self.CHUNK_DURATION) (multithreading no longer use)
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
@@ -62,13 +63,38 @@ class WhisperListener(Node):
             return
 
         try:
-            self.stream = self.p.open(format=self.FORMAT,
-                                      channels=self.CHANNELS,
-                                      rate=self.SAMPLE_RATE,
-                                      input=True,
-                                      frames_per_buffer=self.THREAD_READ_CHUNK_SIZE,
-                                      stream_callback=None # No callback, we read manually
-                                      )
+            # First, let's list available audio devices
+            self.get_logger().info("Available audio devices:")
+            usb_device_index = None
+            for i in range(self.p.get_device_count()):
+                device_info = self.p.get_device_info_by_index(i)
+                # self.get_logger().info(f"Device {i}: {device_info['name']}, channels: {device_info['maxInputChannels']}")
+                # Look for USB audio device with input capabilities
+                if "USB" in device_info['name'] and device_info['maxInputChannels'] > 0:
+                    usb_device_index = i
+                    self.get_logger().info(f"Found USB audio device at index {i}")
+            
+            # Try to open with USB device if found, otherwise use default
+            if usb_device_index is not None:
+                self.get_logger().info(f"Attempting to use USB device {usb_device_index}")
+                self.stream = self.p.open(format=self.FORMAT,
+                                          channels=self.CHANNELS,
+                                          rate=self.SAMPLE_RATE,
+                                          input=True,
+                                          input_device_index=usb_device_index,
+                                          frames_per_buffer=self.THREAD_READ_CHUNK_SIZE,
+                                          stream_callback=None
+                                          )
+            else:
+                self.get_logger().info("No USB device found, using default")
+                self.stream = self.p.open(format=self.FORMAT,
+                                          channels=self.CHANNELS,
+                                          rate=self.SAMPLE_RATE,
+                                          input=True,
+                                          frames_per_buffer=self.THREAD_READ_CHUNK_SIZE,
+                                          stream_callback=None
+                                          )
+            
             self.get_logger().info("Audio stream opened successfully.")
             return True
         except Exception as e:
@@ -83,15 +109,15 @@ class WhisperListener(Node):
                 if self.stream.is_active(): # Check if active before stopping
                     self.stream.stop_stream()
                 self.stream.close()
-                self.get_logger().info("Audio stream stopped and closed.")
+                print("Audio stream stopped and closed.")
             except Exception as e:
-                self.get_logger().warn(f"Error closing audio stream: {e}")
+                print(f"Error closing audio stream: {e}")
             finally:
                 self.stream = None # Ensure stream is set to None after closing
 
     def _on_shutdown(self):
         """Callback executed when the ROS node is shutting down."""
-        self.get_logger().info("Shutting down WhisperListener node...")
+        print("Shutting down WhisperListener node...")
         self._shutdown_requested = True
         
         if self.command_timer:
@@ -99,20 +125,20 @@ class WhisperListener(Node):
 
         self.audio_thread_stop_event.set()
         if self.audio_thread.is_alive():
-            self.get_logger().info("Waiting for audio recording thread to finish...")
+            print("Waiting for audio recording thread to finish...")
             self.audio_thread.join(timeout=5) # Wait up to 5 seconds for thread to finish
             if self.audio_thread.is_alive():
-                self.get_logger().warn("Audio recording thread did not stop gracefully.")
+                print("Audio recording thread did not stop gracefully.")
 
         self._close_audio_stream() # double check that the audio stream is closed
-        self.get_logger().info("Audio stream closed.")
+        print("Audio stream closed.")
 
         if self.p:
             try:
                 self.p.terminate()
-                self.get_logger().info("PyAudio terminated.")
+                print("PyAudio terminated.")
             except Exception as e:
-                self.get_logger().warn(f"Error terminating PyAudio during shutdown: {e}")
+                print(f"Error terminating PyAudio during shutdown: {e}")
 
     def _audio_recorder_thread(self):
         """
@@ -127,8 +153,7 @@ class WhisperListener(Node):
         while not self.audio_thread_stop_event.is_set() and not self._shutdown_requested:
             try:
                 audio_data = self.stream.read(self.THREAD_READ_CHUNK_SIZE, exception_on_overflow=False)
-                audio_np = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
-
+                audio_np = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0 
                 with self.buffer_lock: # Protect buffer access
                     self.audio_buffer.extend(audio_np)
                     # Keep buffer to a manageable size, e.g., 3 seconds of audio (16000 * 3 samples)
@@ -138,8 +163,7 @@ class WhisperListener(Node):
                 self.get_logger().error(f"Error in audio recorder thread: {e}")
                 time.sleep(0.5) # Small sleep to prevent busy loop on error
 
-        self.get_logger().info("Audio recorder thread stopping.")
-        # self._close_audio_stream() # Close the stream managed by this thread
+        print("Audio recorder thread stopping.")
 
     def _get_audio_for_transcription(self, desired_duration_seconds):
         """
@@ -154,16 +178,18 @@ class WhisperListener(Node):
             # Get the last 'samples_to_get' from the buffer
             current_audio = np.array(list(self.audio_buffer)[-samples_to_get:])
             
+        # self.get_logger().info(f"Audio buffer size: {len(self.audio_buffer)}, samples requested: {num_samples}, samples retrieved: {samples_to_get}")
+        
         if current_audio.size == 0:
             self.get_logger().warn("Audio buffer is empty or not enough samples for transcription.")
             return None
 
-        """
-        #Whisper
-        padded_audio = whisper.pad_or_trim(current_audio, whisper.audio.N_SAMPLES)
-        return padded_audio
-        """
-        #Faster Whisper
+        # Resample from 44100 Hz to 16000 Hz for Whisper
+        if self.SAMPLE_RATE != 16000:
+            target_samples = int(len(current_audio) * 16000 / self.SAMPLE_RATE)
+            current_audio = scipy.signal.resample(current_audio, target_samples).astype(np.float32)
+            #self.get_logger().info(f"Resampled audio from {self.SAMPLE_RATE}Hz to 16000Hz, new length: {len(current_audio)}")
+
         return current_audio
 
     def _transcribe_audio(self, audio_np):
@@ -172,19 +198,36 @@ class WhisperListener(Node):
         if audio_np is None:
             self.get_logger().warn("No audio data provided for transcription.")
             return ""
+        
+        """
+        # Debug: Check audio data properties
+        self.get_logger().info(f"Audio data shape: {audio_np.shape}, dtype: {audio_np.dtype}")
+        self.get_logger().info(f"Audio data min: {np.min(audio_np):.4f}, max: {np.max(audio_np):.4f}, mean: {np.mean(audio_np):.4f}")
+        """
         try:
+            # Faster Whisper: Get segments and extract text
             segments, info = self.model.transcribe(audio_np, language='en')
+            
+            #self.get_logger().info(f"Transcription info: {info}")
+            
+            # Extract text from segments
+            text = ""
+            #segment_count = 0
+            for segment in segments:
+                #segment_count += 1
+                #self.get_logger().info(f"Segment {segment_count}: {segment.text}")
+                text += segment.text
+            
+            # self.get_logger().info(f"Total segments: {segment_count}")
+            self.get_logger().info(f"Transcription result: '{text.strip()}'")
+            return text.strip()
+
+            # OLD METHOD (commented for revert):
             """
             # Whisper
             result = self.model.transcribe(audio_np, language='en', fp16=False) # fp16=False for CPU
             return result['text'].strip()
             """
-
-            # Faster Whisper: Extract text from segments
-            text = ""
-            for segment in segments:
-                text += segment.text
-            return text.strip()
 
         except Exception as e:
             self.get_logger().error(f"Error during transcription: {e}")
@@ -309,18 +352,33 @@ class WhisperListener(Node):
 
 def main(args=None):
     rclpy.init(args=args)
+    listener = None
     
     try:
         listener = WhisperListener()
         listener.run()  # This already starts the audio thread and runs the main loop
         
     except KeyboardInterrupt:
-        pass
+        if listener:
+            listener.get_logger().info("Shutting down WhisperListener...")
+    except Exception as e:
+        if listener:
+            listener.get_logger().error(f"Error in WhisperListener: {e}")
     finally:
-        if 'listener' in locals():
-            listener._on_shutdown()
-            listener.destroy_node()
-        rclpy.shutdown()
+        # Ensure proper cleanup sequence
+        if listener:
+            try:
+                listener._on_shutdown()
+                listener.destroy_node()
+            except Exception as e:
+                print(f"Error during listener cleanup: {e}")
+        
+        # Only shutdown if we initialized and ROS is still ok
+        try:
+            if rclpy.ok():
+                rclpy.shutdown()
+        except Exception as e:
+            print(f"Error during ROS shutdown: {e}")
 
 if __name__ == '__main__':
     main()

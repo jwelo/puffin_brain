@@ -89,15 +89,31 @@ class CommandPublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
+    commander = None
     
     try:
         commander = CommandPublisher()
         rclpy.spin(commander)
     except KeyboardInterrupt:
-        pass
+        if commander:
+            commander.get_logger().info("Shutting down CommandPublisher...")
+    except Exception as e:
+        if commander:
+            commander.get_logger().error(f"Error in CommandPublisher: {e}")
     finally:
-        commander.destroy_node()
-        rclpy.shutdown()
+        # Ensure proper cleanup sequence
+        if commander:
+            try:
+                commander.destroy_node()
+            except Exception as e:
+                print(f"Error destroying commander node: {e}")
+        
+        # Only shutdown if we initialized and ROS is still ok
+        try:
+            if rclpy.ok():
+                rclpy.shutdown()
+        except Exception as e:
+            print(f"Error during ROS shutdown: {e}")
 
 if __name__ == '__main__':
     main()
