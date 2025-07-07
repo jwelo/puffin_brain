@@ -4,8 +4,8 @@ import rclpy
 from rclpy.node import Node
 import pyaudio
 import numpy as np
-#from faster_whisper import WhisperModel
-import whisper
+from faster_whisper import WhisperModel
+#import whisper
 from std_msgs.msg import String
 import threading
 import collections
@@ -19,15 +19,16 @@ class WhisperListener(Node):
         # ROS Publisher
         self.transcription_pub = self.create_publisher(String, '/whisper_transcription', 10)
 
-        """
+        
         # Faster Whisper
-        self.get_logger().info("Loading Whisper model (tiny)...")
-        model = WhisperModel("tiny", device="cuda", compute_type="float16")
+        self.get_logger().info("Loading Whisper model (tiny.en)...")
+        self.model = WhisperModel("tiny.en", device="cpu", compute_type="int8")
+        self.get_logger().info("Whisper model loaded successfully.")
         """
         # Whisper 
-        self.model = whisper.load_model("tiny")
+        self.model = whisper.load_model("tiny.en")
         self.get_logger().info("Whisper model loaded.")
-
+        """
         # Audio Parameters
         self.CHUNK_DURATION = 1
         self.SAMPLE_RATE = 16000
@@ -157,22 +158,39 @@ class WhisperListener(Node):
             self.get_logger().warn("Audio buffer is empty or not enough samples for transcription.")
             return None
 
+        """
+        #Whisper
         padded_audio = whisper.pad_or_trim(current_audio, whisper.audio.N_SAMPLES)
         return padded_audio
-
+        """
+        #Faster Whisper
+        return current_audio
 
     def _transcribe_audio(self, audio_np):
-        """Transcribes audio using the Whisper model."""
+        """Transcribes audio using the Faster Whisper model."""
         self.get_logger().info("Transcribing audio, not recording")
         if audio_np is None:
             self.get_logger().warn("No audio data provided for transcription.")
             return ""
         try:
+            segments, info = self.model.transcribe(audio_np, language='en')
+            """
+            # Whisper
             result = self.model.transcribe(audio_np, language='en', fp16=False) # fp16=False for CPU
             return result['text'].strip()
+            """
+
+            # Faster Whisper: Extract text from segments
+            text = ""
+            for segment in segments:
+                text += segment.text
+            return text.strip()
+
         except Exception as e:
             self.get_logger().error(f"Error during transcription: {e}")
             return ""
+
+            
 
     def _handle_command_timer(self):
         # Callback for the command mode timer.

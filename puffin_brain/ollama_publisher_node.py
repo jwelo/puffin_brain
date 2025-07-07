@@ -79,9 +79,10 @@ class OllamaPublisherNode(Node):
                 "These functions handle all ROS communication. There is no need to access ROS nodes or topics directly. "
                 "EXECUTE EACH FUNCTION ONLY ONCE PER USER COMMAND. "
                 "If duration is not specified, use a default of 2 seconds. "
-                "If speed is not specified, use 1 for linear and 2 for angular movement. "
-                "Turning left uses a positive angular speed. "
-                "Turning right uses a negative angular speed. "
+                "If speed is not specified, use 2 for linear and 2 for angular movement."
+                "Turning left uses a POSITIVE angular speed."
+                "Turning right uses a NEGATIVE angular speed."
+                "For turning, turning 90 degrees is at speed 2 for 2 seconds."
                 "Moving forward uses a positive linear speed, moving backward uses a negative linear speed. "
                 "DO NOT repeat, undo, or correct your actions automatically."
             ),
