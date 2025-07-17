@@ -31,11 +31,13 @@ class CommandPublisher(Node):
         self.command_queue = queue.Queue()
         self.executing = False
         self.twist_hand_msg = Twist()
+        self.ollama_executing = False
 
 
     def ollama_callback(self, message):
         self.get_logger().info(f"Ollama Command Received: Linear Velocity of {message.linear_x} for {message.linear_x_duration:.2f} seconds,"
                       f"Angular Velocity of {message.angular_z} for {message.angular_z_duration:.2f} seconds")
+        self.ollama_executing = True
         self.command_queue.put(message)
 
     def hand_callback(self, message):
@@ -74,6 +76,7 @@ class CommandPublisher(Node):
         if not self.executing and not self.command_queue.empty():
             message = self.command_queue.get()
             self.executing = True   
+            self.ollama_executing = True
 
             if message.linear_x_duration > 0:
                 self.end_time_linear_x = time.time() + message.linear_x_duration
@@ -90,37 +93,39 @@ class CommandPublisher(Node):
                 self.current_angular_z = 0.0
 
     def publish_command(self):
-        current_time = time.time()
-        if not self.executing:
-            self.try_execute_next_command()
-        else:
-            # Check if linear movement time has expired
-            if self.end_time_linear_x > 0.0 and current_time >= self.end_time_linear_x:
-                self.current_linear_x = 0.0
-                self.end_time_linear_x = 0.0
-            
-            # Check if angular movement time has expired
-            if self.end_time_angular_z > 0.0 and current_time >= self.end_time_angular_z:
-                self.current_angular_z = 0.0
-                self.end_time_angular_z = 0.0
+        if self.ollama_executing:
+            current_time = time.time()
+            if not self.executing:
+                self.try_execute_next_command()
+            else:
+                # Check if linear movement time has expired
+                if self.end_time_linear_x > 0.0 and current_time >= self.end_time_linear_x:
+                    self.current_linear_x = 0.0
+                    self.end_time_linear_x = 0.0
                 
-            # Check if we're done executing the current command
-            if self.current_linear_x == 0.0 and self.current_angular_z == 0.0:
-                self.executing = False
+                # Check if angular movement time has expired
+                if self.end_time_angular_z > 0.0 and current_time >= self.end_time_angular_z:
+                    self.current_angular_z = 0.0
+                    self.end_time_angular_z = 0.0
+                    
+                # Check if we're done executing the current command
+                if self.current_linear_x == 0.0 and self.current_angular_z == 0.0:
+                    self.executing = False
+                    self.ollama_executing = False
 
-        # Create a Twist message
-        twist_msg = Twist()
+            # Create a Twist message
+            twist_msg = Twist()
 
-        # Set the linear and angular velocities
-        twist_msg.linear.x = self.current_linear_x
-        twist_msg.angular.z = self.current_angular_z
+            # Set the linear and angular velocities
+            twist_msg.linear.x = self.current_linear_x
+            twist_msg.angular.z = self.current_angular_z
 
-        # Publish the Twist message to the '/cmd_vel' topic
-        self.pub.publish(twist_msg)
+            # Publish the Twist message to the '/cmd_vel' topic
+            self.pub.publish(twist_msg)
 
-        # Log the published command
-        if (self.current_linear_x != 0.0 or self.current_angular_z != 0.0):
-            self.get_logger().info(f"Command Publisher : Linear Velocity {self.current_linear_x:.2f} m/s, Angular Velocity {self.current_angular_z:.2f} rad/s")
+            # Log the published command
+            if (self.current_linear_x != 0.0 or self.current_angular_z != 0.0):
+                self.get_logger().info(f"Command Publisher : Linear Velocity {self.current_linear_x:.2f} m/s, Angular Velocity {self.current_angular_z:.2f} rad/s")
 
 def main(args=None):
     rclpy.init(args=args)

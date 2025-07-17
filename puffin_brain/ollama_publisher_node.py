@@ -62,7 +62,7 @@ class OllamaPublisherNode(Node):
         # Initialize LLM and prompts
         self.ollama_llm = ChatOllama(
             model="llama3.2", #from llama3.2
-            temperature=0, # from 0
+            temperature=0.1, # from 0
             num_ctx=8192,  # Reduced from 8192
             verbose=True,
         )
@@ -100,26 +100,13 @@ class OllamaPublisherNode(Node):
         )
         
         # Create an instance of the ROSA agent with the specified prompts and tools
-        # Try to disable built-in ROS tools to prevent conflicts
-        try:
-            self.agent = ROSA(
-                ros_version=2, 
-                llm=self.ollama_llm, 
-                tools=[robot_linear_movement, robot_turning_movement], 
-                prompts=self.prompts, 
-                verbose=True,
-                include_ros_tools=False  # Try to disable built-in ROS tools
-            )
-        except TypeError:
-            # If include_ros_tools parameter doesn't exist, try without it
-            self.get_logger().info("include_ros_tools parameter not supported, trying without it")
-            self.agent = ROSA(
-                ros_version=2, 
-                llm=self.ollama_llm, 
-                tools=[robot_linear_movement, robot_turning_movement], 
-                prompts=self.prompts, 
-                verbose=True
-            )
+        self.agent = ROSA(
+            ros_version=2, 
+            llm=self.ollama_llm, 
+            tools=[robot_linear_movement, robot_turning_movement], 
+            prompts=self.prompts, 
+            verbose=True
+        )
         self.get_logger().info("ROSA Agent Initialized")
 
     def callback(self, data):
