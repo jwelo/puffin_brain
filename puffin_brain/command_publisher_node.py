@@ -15,7 +15,8 @@ class CommandPublisher(Node):
         # Initialize the ROS node
         super().__init__('command_publisher')
 
-        self.sub = self.create_subscription(Tutwist, '/cmd_ollama', self.callback, 10)
+        self.sub_ollama = self.create_subscription(Tutwist, '/cmd_ollama', self.ollama_callback, 10)
+        self.sub_hand = self.create_subscription(Twist, '/cmd_hand', self.hand_callback, 10)
 
         # Create a publisher for the '/cmd_vel' topic
         self.pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -29,11 +30,45 @@ class CommandPublisher(Node):
         self.timer = self.create_timer(1.0 / self.publishing_rate, self.publish_command)
         self.command_queue = queue.Queue()
         self.executing = False
+        self.twist_hand_msg = Twist()
 
-    def callback(self, message):
+
+    def ollama_callback(self, message):
         self.get_logger().info(f"Ollama Command Received: Linear Velocity of {message.linear_x} for {message.linear_x_duration:.2f} seconds,"
                       f"Angular Velocity of {message.angular_z} for {message.angular_z_duration:.2f} seconds")
         self.command_queue.put(message)
+
+    def hand_callback(self, message):
+        if message.linear.x == 0.0 and message.angular.z == 0.0:
+            self.get_logger().info("Hand Gesture STOP Command Received.")
+            self.twist_hand_msg.linear.x = 0.0
+            self.twist_hand_msg.angular.z = 0.0
+            self.pub.publish(self.twist_hand_msg)
+            return
+        elif not self.executing:
+            if message.angular.z > 0.0:
+                self.get_logger().info(f"Hand Gesture LEFT Command Received")
+                self.twist_hand_msg.linear.x = 0.0
+                self.twist_hand_msg.angular.z = 0.5
+                self.pub.publish(self.twist_hand_msg)
+                return
+            elif message.angular.z < 0.0:
+                self.get_logger().info(f"Hand Gesture RIGHT Command Received")
+                self.twist_hand_msg.linear.x = 0.0
+                self.twist_hand_msg.angular.z = -0.5
+                self.pub.publish(self.twist_hand_msg)
+                return
+            elif message.linear.x > 0.0:
+                self.get_logger().info(f"Hand Gesture FORWARD Command Received")
+                self.twist_hand_msg.linear.x = 0.11
+                self.twist_hand_msg.angular.z = 0.0
+                self.pub.publish(self.twist_hand_msg)
+                return
+            else:
+                self.get_logger().info(f"Hand Gesture BACKWARD Command Received")
+                self.twist_hand_msg.linear.x = -0.11
+                self.twist_hand_msg.angular.z = 0.0
+                self.pub.publish(self.twist_hand_msg)
 
     def try_execute_next_command(self):
         if not self.executing and not self.command_queue.empty():

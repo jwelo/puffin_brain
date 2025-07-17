@@ -72,15 +72,18 @@ class OllamaPublisherNode(Node):
             critical_instructions=(
                 "IMPORTANT: Execute only ONE action per user request unless explicitly told to do multiple actions. "
                 "For compound commands like 'go forward and turn right', execute them as separate sequential actions ONLY if the user explicitly requests both. "
-                "Do not add extra movements or corrections."
+                "Do not add extra movements or corrections. "
+                "ONLY use the provided robot_linear_movement and robot_turning_movement functions."
+                "NEVER use ros2_service_call or any ROS2 command-line tools. "
             ),
             about_your_capabilities=(
-                "You control movement using two Python functions: `robot_linear_movement` (forwards/backwards) and `robot_turning_movement` (turning). "
+                "You control movement using ONLY two Python functions: `robot_linear_movement` (forwards/backwards) and `robot_turning_movement` (turning). "
+                "These are the ONLY functions you should use. Do not use any ROS2 service calls, command-line tools, or other ROS functions. "
                 "These functions handle all ROS communication. There is no need to access ROS nodes or topics directly. "
                 "If duration is not specified, use a default of 2 seconds. "
                 "If speed is not specified, use 2 for linear and 2 for angular movement."
                 "check the direction of turning before assigning positive or negative"
-                "For turning left, use a POSITIVE angular speed."
+                "For turning left, use a POSITIVE angular speed. do not get this wrong"
                 "For turning right, use a NEGATIVE angular speed."
                 "For turning, every 90 degrees is 2 seconds at speed 2. Do math to calculate the respective duration for other angles. For example, 180 degrees is 4 seconds at speed 2. "
                 "Moving forward uses a positive linear speed, moving backward uses a negative linear speed. "
@@ -88,6 +91,7 @@ class OllamaPublisherNode(Node):
             ),
             about_your_environment=(
                 "You are in a ROS environment. Only use the provided movement functions; do not access ROS nodes or topics directly. "
+                "Do not use ros2_service_call, ros2 topic pub, or any other ROS2 command-line tools. "
                 "Execute each function only once per user request, even if you assume default values."
             ),
             about_your_operators=(
@@ -96,13 +100,32 @@ class OllamaPublisherNode(Node):
         )
         
         # Create an instance of the ROSA agent with the specified prompts and tools
-        self.agent = ROSA(ros_version=2, llm=self.ollama_llm, tools=[robot_linear_movement, robot_turning_movement], prompts=self.prompts, verbose=True)
+        # Try to disable built-in ROS tools to prevent conflicts
+        try:
+            self.agent = ROSA(
+                ros_version=2, 
+                llm=self.ollama_llm, 
+                tools=[robot_linear_movement, robot_turning_movement], 
+                prompts=self.prompts, 
+                verbose=True,
+                include_ros_tools=False  # Try to disable built-in ROS tools
+            )
+        except TypeError:
+            # If include_ros_tools parameter doesn't exist, try without it
+            self.get_logger().info("include_ros_tools parameter not supported, trying without it")
+            self.agent = ROSA(
+                ros_version=2, 
+                llm=self.ollama_llm, 
+                tools=[robot_linear_movement, robot_turning_movement], 
+                prompts=self.prompts, 
+                verbose=True
+            )
         self.get_logger().info("ROSA Agent Initialized")
 
     def callback(self, data):
         self.get_logger().info(f"Received transcription: {data.data}")
-        agent_response = self.agent.invoke(data.data)
-        # self.get_logger().info(f"Agent Final Response (from debug invocation): {self.agent_response}")
+        self.agent_response = self.agent.invoke(data.data)
+        self.get_logger().info(f"Agent Final Response (from debug invocation): {self.agent_response}")
 
 # Global variable to access the node from tool functions
 ollama_node = None
