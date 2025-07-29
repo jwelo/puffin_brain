@@ -62,9 +62,9 @@ class OllamaPublisherNode(Node):
         # Initialize LLM and prompts
         self.ollama_llm = ChatOllama(
             model="llama3.2", #from llama3.2
-            temperature=0.1, # from 0
+            temperature=0, # from 0
             num_ctx=8192,  # Reduced from 8192
-            verbose=True,
+            #verbose=True,
         )
 
         self.prompts = RobotSystemPrompts(
@@ -80,12 +80,12 @@ class OllamaPublisherNode(Node):
                 "You control movement using ONLY two Python functions: `robot_linear_movement` (forwards/backwards) and `robot_turning_movement` (turning). "
                 "These are the ONLY functions you should use. Do not use any ROS2 service calls, command-line tools, or other ROS functions. "
                 "These functions handle all ROS communication. There is no need to access ROS nodes or topics directly. "
-                "If duration is not specified, use a default of 2 seconds. "
+                "If duration is not specified, use a default of 2 seconds. use 2 seconds. "
                 "If speed is not specified, use 2 for linear and 2 for angular movement."
                 "check the direction of turning before assigning positive or negative"
                 "For turning left, use a POSITIVE angular speed. do not get this wrong"
                 "For turning right, use a NEGATIVE angular speed."
-                "For turning, every 90 degrees is 2 seconds at speed 2. Do math to calculate the respective duration for other angles. For example, 180 degrees is 4 seconds at speed 2. "
+                "For turning, every 90 degrees is 2 seconds at speed 2. Do math to calculate the respective duration for other angles. "
                 "Moving forward uses a positive linear speed, moving backward uses a negative linear speed. "
                 "DO NOT repeat, undo, or correct your actions automatically."
             ),

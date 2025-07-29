@@ -29,43 +29,51 @@ class CommandPublisher(Node):
         self.publishing_rate = 10  # 10 Hz
         self.timer = self.create_timer(1.0 / self.publishing_rate, self.publish_command)
         self.command_queue = queue.Queue()
-        self.executing = False
+        #self.executing = False
         self.twist_hand_msg = Twist()
         self.ollama_executing = False
+        self.hand_executing = False
+        self.hand_command_timeout = 0.0
 
 
     def ollama_callback(self, message):
         self.get_logger().info(f"Ollama Command Received: Linear Velocity of {message.linear_x} for {message.linear_x_duration:.2f} seconds,"
                       f"Angular Velocity of {message.angular_z} for {message.angular_z_duration:.2f} seconds")
-        self.ollama_executing = True
         self.command_queue.put(message)
 
     def hand_callback(self, message):
         if message.linear.x == 0.0 and message.angular.z == 0.0:
-            self.get_logger().info("Hand Gesture STOP Command Received.")
+            self.get_logger().warn("Hand Gesture STOP Command Received.")
             self.twist_hand_msg.linear.x = 0.0
             self.twist_hand_msg.angular.z = 0.0
             self.pub.publish(self.twist_hand_msg)
+            self.ollama_executing = False
+            self.hand_executing = False
+            self.hand_command_timeout = 0.0
+            # Reset the command queue
+            while not self.command_queue.empty():
+                self.command_queue.get()
             return
-        elif not self.executing:
+        elif not self.ollama_executing:
+            # Set a timeout for hand gestures (e.g., 0.1 seconds)
+            self.hand_executing = True
+            self.hand_command_timeout = time.time() + 0.2
+            
             if message.angular.z > 0.0:
                 self.get_logger().info(f"Hand Gesture LEFT Command Received")
                 self.twist_hand_msg.linear.x = 0.0
                 self.twist_hand_msg.angular.z = 0.5
                 self.pub.publish(self.twist_hand_msg)
-                return
             elif message.angular.z < 0.0:
                 self.get_logger().info(f"Hand Gesture RIGHT Command Received")
                 self.twist_hand_msg.linear.x = 0.0
                 self.twist_hand_msg.angular.z = -0.5
                 self.pub.publish(self.twist_hand_msg)
-                return
             elif message.linear.x > 0.0:
                 self.get_logger().info(f"Hand Gesture FORWARD Command Received")
                 self.twist_hand_msg.linear.x = 0.11
                 self.twist_hand_msg.angular.z = 0.0
                 self.pub.publish(self.twist_hand_msg)
-                return
             else:
                 self.get_logger().info(f"Hand Gesture BACKWARD Command Received")
                 self.twist_hand_msg.linear.x = -0.11
@@ -73,45 +81,48 @@ class CommandPublisher(Node):
                 self.pub.publish(self.twist_hand_msg)
 
     def try_execute_next_command(self):
-        if not self.executing and not self.command_queue.empty():
-            message = self.command_queue.get()
-            self.executing = True   
+        if not self.command_queue.empty():
+            message = self.command_queue.get()  
             self.ollama_executing = True
-
             if message.linear_x_duration > 0:
                 self.end_time_linear_x = time.time() + message.linear_x_duration
                 self.current_linear_x = message.linear_x/23
             else:
-                self.end_time_linear_x = 0.0
                 self.current_linear_x = 0.0
 
             if message.angular_z_duration > 0:
                 self.end_time_angular_z = time.time() + message.angular_z_duration
                 self.current_angular_z = message.angular_z/2
             else:
-                self.end_time_angular_z = 0.0
                 self.current_angular_z = 0.0
 
     def publish_command(self):
-        if self.ollama_executing:
-            current_time = time.time()
-            if not self.executing:
-                self.try_execute_next_command()
-            else:
-                # Check if linear movement time has expired
-                if self.end_time_linear_x > 0.0 and current_time >= self.end_time_linear_x:
-                    self.current_linear_x = 0.0
-                    self.end_time_linear_x = 0.0
+        current_time = time.time()
+        
+        # Handle hand gesture timeout
+        if self.hand_executing and current_time >= self.hand_command_timeout:
+            # Stop the hand gesture by publishing zero velocities
+            self.hand_executing = False
+            stop_msg = Twist()
+            stop_msg.linear.x = 0.0
+            stop_msg.angular.z = 0.0
+            self.pub.publish(stop_msg)
+            #DEBUG self.get_logger().info("Hand gesture timeout - stopped")
+            
+        if not self.ollama_executing:
+            self.try_execute_next_command()
+        else:
+            # Check if linear movement time has expired
+            if current_time >= self.end_time_linear_x:
+                self.current_linear_x = 0.0
+            
+            # Check if angular movement time has expired
+            if current_time >= self.end_time_angular_z:
+                self.current_angular_z = 0.0
                 
-                # Check if angular movement time has expired
-                if self.end_time_angular_z > 0.0 and current_time >= self.end_time_angular_z:
-                    self.current_angular_z = 0.0
-                    self.end_time_angular_z = 0.0
-                    
-                # Check if we're done executing the current command
-                if self.current_linear_x == 0.0 and self.current_angular_z == 0.0:
-                    self.executing = False
-                    self.ollama_executing = False
+            # Check if we're done executing the current command
+            if self.current_linear_x == 0.0 and self.current_angular_z == 0.0:
+                self.ollama_executing = False
 
             # Create a Twist message
             twist_msg = Twist()

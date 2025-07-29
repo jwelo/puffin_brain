@@ -32,7 +32,7 @@ class WhisperListener(Node):
         """
         # Audio Parameters
         self.CHUNK_DURATION = 1
-        self.SAMPLE_RATE = 44100  # Changed to match USB device's native rate
+        self.SAMPLE_RATE = 48000  # Use 48kHz which is supported by ATR4697-USB
         # self.CHUNK_SIZE = int(self.SAMPLE_RATE * self.CHUNK_DURATION) (multithreading no longer use)
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
@@ -68,9 +68,13 @@ class WhisperListener(Node):
             usb_device_index = None
             for i in range(self.p.get_device_count()):
                 device_info = self.p.get_device_info_by_index(i)
-                # self.get_logger().info(f"Device {i}: {device_info['name']}, channels: {device_info['maxInputChannels']}")
-                # Look for USB audio device with input capabilities
-                if "USB" in device_info['name'] and device_info['maxInputChannels'] > 0:
+                self.get_logger().info(f"Device {i}: {device_info['name']}, channels: {device_info['maxInputChannels']}")
+                # Look for ATR4697-USB device first (better quality), then any USB device with input capabilities
+                if "ATR4697" in device_info['name'] and device_info['maxInputChannels'] > 0:
+                    usb_device_index = i
+                    self.get_logger().info(f"Found ATR4697-USB audio device at index {i}")
+                    break
+                elif usb_device_index is None and "USB" in device_info['name'] and device_info['maxInputChannels'] > 0:
                     usb_device_index = i
                     self.get_logger().info(f"Found USB audio device at index {i}")
             
@@ -184,7 +188,7 @@ class WhisperListener(Node):
             self.get_logger().warn("Audio buffer is empty or not enough samples for transcription.")
             return None
 
-        # Resample from 44100 Hz to 16000 Hz for Whisper
+        # Resample from 48000 Hz to 16000 Hz for Whisper
         if self.SAMPLE_RATE != 16000:
             target_samples = int(len(current_audio) * 16000 / self.SAMPLE_RATE)
             current_audio = scipy.signal.resample(current_audio, target_samples).astype(np.float32)
@@ -206,7 +210,7 @@ class WhisperListener(Node):
         """
         try:
             # Faster Whisper: Get segments and extract text
-            segments, info = self.model.transcribe(audio_np, language='en')
+            segments, info = self.model.transcribe(audio_np, language='en', vad_filter=True)
             
             #self.get_logger().info(f"Transcription info: {info}")
             
@@ -263,8 +267,8 @@ class WhisperListener(Node):
 
         # rate = rospy.Rate(0.1)
         self.get_logger().info("Listening for command...\n Include direction, speed (1-5) and duration (in seconds)")
-        time.sleep(8) # Give some time before starting to listen
-        audio_np = self._get_audio_for_transcription((self.CHUNK_DURATION)*10)
+        time.sleep(5) # Give some time before starting to listen
+        audio_np = self._get_audio_for_transcription((self.CHUNK_DURATION)*6)
         command = self._transcribe_audio(audio_np)
         
         # Create and publish the transcription message
@@ -312,8 +316,7 @@ class WhisperListener(Node):
         self.get_logger().info("Exited command transcription mode.")
 
     def wait_for_hello_loop(self):
-        """Main loop to listen for 'hello turtle'."""
-        self.get_logger().info("Listening for 'hello turtle'...")
+        """Main loop to listen for 'hello'."""
         self.is_transcribing_commands = False # Ensure this is false
 
         # Ensure the stream is opened correctly *before* starting the main loop
