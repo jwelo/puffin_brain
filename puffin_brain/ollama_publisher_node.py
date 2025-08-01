@@ -61,10 +61,10 @@ class OllamaPublisherNode(Node):
         
         # Initialize LLM and prompts
         self.ollama_llm = ChatOllama(
-            model="llama3.2", #from llama3.2
-            temperature=0, # from 0
-            num_ctx=8192,  # Reduced from 8192
-            #verbose=True,
+            model="llama3.2",
+            temperature=0,
+            num_ctx=8192,
+            verbose=True,
         )
 
         self.prompts = RobotSystemPrompts(
