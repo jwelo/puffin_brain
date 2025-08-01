@@ -323,12 +323,8 @@ class WhisperListener(Node):
 
         if not self.stream:
             self.get_logger().error("Failed to open audio stream for wake word. Node may not function.")
-            # If we can't open stream, we can't listen. Keep trying or let node crash.
-            # For now, let's keep trying in the loop, but it will error on process_audio_chunk.
-            # A better solution here might be to spin ROS or wait, then retry.
             pass # Continue to the loop, where _process_audio_chunk will log errors
 
-        # In ROS 2, we need to use time.sleep instead of rospy.Rate
         while not self._shutdown_requested and not self.is_transcribing_commands:
             self.get_logger().info("Waiting for 'hello'...")
             
